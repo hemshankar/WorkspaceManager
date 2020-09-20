@@ -7,6 +7,10 @@
 GET     /                                   controllers.HomeController.index
 GET     /explore                            controllers.HomeController.explore
 GET     /tutorial                           controllers.HomeController.tutorial
+GET     /ws                                 controllers.WSController.getWS
+
++nocsrf
+POST    /execute                            controllers.WSController.execute
 
 
 # Map static resources from the /public folder to the /assets URL path
