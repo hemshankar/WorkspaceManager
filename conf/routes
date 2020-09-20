@@ -9,7 +9,7 @@ GET     /explore                            controllers.HomeController.explore
 GET     /tutorial                           controllers.HomeController.tutorial
 GET     /ws                                 controllers.WSController.getWS
 
-+nocsrf
++no csrf
 POST    /execute                            controllers.WSController.execute
 
 

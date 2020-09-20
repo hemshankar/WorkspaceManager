@@ -33,11 +33,11 @@ class WSController @Inject()(cc: ControllerComponents) extends AbstractControlle
     } catch {
       case e:Exception => {
         e.printStackTrace()
-        Ok(Json.toJson(Task(taskID, cmd, e.getStackTrace.map(x => x.toString).mkString("\n"))))
+        Ok(Json.toJson(Task(taskID, cmd, e.getMessage + "\n" + e.getStackTrace.map(x => x.toString).mkString("\n"))))
       }
       case t : Throwable => {
         t.printStackTrace()
-        Ok(Json.toJson(Task(taskID, cmd, t.getStackTrace.map(x => x.toString).mkString("\n"))))
+        Ok(Json.toJson(Task(taskID, cmd,  t.getMessage + "\n" +  t.getStackTrace.map(x => x.toString).mkString("\n"))))
       }
     }
   }

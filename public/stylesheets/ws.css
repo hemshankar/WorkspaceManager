@@ -1,0 +1,42 @@
+.movableDiv {
+  position: absolute;
+  z-index: 9;
+  background-color: #f1f1f1;
+  text-align: center;
+  border: 1px solid #d3d3d3;
+}
+
+.movableDivheader {
+  padding: 10px;
+  cursor: move;
+  font-weight: bold;
+  width: 100%;
+  z-index: 10;
+  background-color: #2196F3;
+  color: black;##fff;
+}
+
+.button {
+  display: inline-block;
+  margin: 5px; #0.75rem;
+  padding: 5px; #0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.1875rem;
+  outline: none;
+  background-color: tomato;
+  color: white;
+  font-family: verdana;
+
+  font-size: 16px; #1.25em;
+  font-weight: 400;
+  line-height: 1.5rem;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.button:link {color:#FF0000;}    /* unvisited link, same as regular 'a' */
+.button:hover {background-color: orange;}   /* mouse over link */
+.button:focus {background-color: lightgray;}   /* link has focus */
+.button:active {background-color: lightgray}  /* selected link */

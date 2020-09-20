@@ -1,0 +1,27 @@
+<div id="TASK_ID">
+    <table style="border: 1px solid black; background: gray; color: white;">
+        <tr>
+            <th>
+                <div id="TASK_NAME">
+                    <input type="text" style="width: 85%; float: left; background: black; color: white; border: none;" value="Name">
+                    <div style="float: right;width: 2%"  class='movableDivheader' id='MOVABLE_TASK_IDheader' value = " + header + "></div>
+                </div>
+            </th>
+        </tr>
+        <tr>
+            <td>
+                <textarea id="TASK_CMD" type="text" value="cmd" style="width: 90%; height: 20px; color: white; border: none; border-bottom: 1px solid white; background: gray">ls -ltr</textarea>
+                <img style="float: right;" onclick="execute('TASK_ID','TASK_CMD', 'TASK_OUT' )" src='@routes.Assets.versioned("images/favicon.png")'/>
+            </td>
+
+        </tr>
+        <tr>
+            <td>
+                <!--<textarea type="text" value="cmd" style="color: white; border: none; border-bottom: 1px solid white; background: black">logs</textarea>-->
+                <div id="TASK_OUT" style="margin: 2px;max-width: 800px; resize: both;
+                    max-height: 400px; overflow: auto; white-space: pre; background: black;
+                    color: lightgreen; font-size: 10px; font-family: couriernew"></div>
+            </td>
+        </tr>
+    </table>
+</div>
