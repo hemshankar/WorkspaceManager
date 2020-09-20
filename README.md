@@ -25,6 +25,7 @@ Developing WSManager with following requirements and features:
 13. Packages can be installed and complete programs can be run.
 14. Provide basic file browsers, for containers as well.
 15. Provide basic terminal facility.
+16. Provide AI assistance.
 
 
 
