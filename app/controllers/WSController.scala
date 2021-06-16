@@ -18,7 +18,7 @@ import play.api.libs.json._
 class WSController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
   //temp Save Location. Later persistence has to happen in the cloud
-  val DEFAULT_SAVE_FOLDER = "/data/home/devbld/wsFiles"
+  val DEFAULT_SAVE_FOLDER = System.getProperty("user.home")// "/data/home/devbld/wsFiles"
   val DEFAULT_SAVE_FILE = "ws.txt"
   val DEFAULT_SAVE_LOCATION = DEFAULT_SAVE_FOLDER + "/" + DEFAULT_SAVE_FILE
   val delimiter = "_._._._._"
@@ -201,5 +201,20 @@ class WSController @Inject()(cc: ControllerComponents) extends AbstractControlle
         Ok(e.getMessage)
       }
     }
+  }
+
+
+  def getContainers() = Action { implicit request: Request[AnyContent] =>
+    /*val paramsMap = request.body.asFormUrlEncoded.get.map(x => (x._1 -> x._2.head))
+    try {
+      val t = paramsMap.getOrElse("task_id", "0000")
+    }catch {
+      case t:Throwable => t.printStackTrace()
+    }*/
+    val execHelper = ExecutionHelper.execute("docker ps -a --format '{{.Image}}<-->{{.Names}}<-->{{.Status}}'")
+    execHelper.waitForCompletion()
+    val output = execHelper.getAllLogs()
+    Ok(output)
+
   }
 }

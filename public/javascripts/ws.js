@@ -235,7 +235,6 @@ function addElementWithDetails(id, name, cmds, logs, top, left, zIndex_, duratio
     minimize(id)
 }
 
-
 function addElem3(){
 
     var randomNum = Math.floor(Math.random() * 1000000000);
@@ -457,3 +456,48 @@ function resize (outID) {
    //return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
    return pad(hrs) + ':' + pad(mins) + ':' + pad(secs);
  }
+
+
+
+//========================================Containers=============================================
+class ContainerDetails{
+    constructor(name, image, id){
+        this.name = name;
+        this.image = image;
+        this.id = id;
+    }
+}
+
+var containerList = new Array()
+
+function createContainersList(containers){
+    containerList = new Array()
+    containers = containers.split("\n")
+    for(i in containers){
+        var details = containers[i].split("<-->")
+        var cont = new ContainerDetails(details[1].trim(),details[0].trim(),details[2].trim())
+        containerList.push(cont)
+    }
+}
+
+function showContainers(contList){
+    createContainersList(contList)
+    var containersDiv = document.getElementById("containers")
+    containersDiv.innerHTML = ""
+    for(c in containerList){
+        containersDiv.innerHTML = containersDiv.innerHTML + "<br/> <div onclick='showContainerLogs(\"" + containerList[c].name + "\")' class='button'>" + containerList[c].name.substring(0,50) + "</div>"
+    }
+}
+
+function showContainerLogs(containerName){
+    var randomNum = Math.floor(Math.random() * 1000000000);
+    var date_ = new Date();
+    var time_ = date_.getTime();
+    var tID = "TASK_" + time_ + "_" + randomNum
+    var left = Math.floor(Math.random() * 1000) + 100
+    var top = Math.floor(Math.random() * 200) + 100
+    addElementWithDetails(tID, containerName, "docker logs --follow --tail 10 " + containerName, "", top, left, "0", 0, 0)
+    document.getElementById("MAX_" + tID).click();
+    var runButton = document.getElementById("RUN_" + tID)
+    runButton.click();
+}

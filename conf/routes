@@ -4,6 +4,7 @@
 # ~~~~
 
 # An example controller showing a sample home page
+POST     /containers                        controllers.WSController.getContainers
 
 GET     /ws                                 controllers.WSController.getWS
 GET     /getAllRunningTasks                 controllers.WSController.getAllRunningTasks

@@ -12,8 +12,19 @@
 
 </head>
 
-<body onload="loadTasks();saveWSTempEveryXSec(5);getAllRunningTasks()">
+<body onload="loadTasks();saveWSTempEveryXSec(5);getAllRunningTasks();getAllContainers();">
     <script>
+
+        setInterval(getAllContainers, 3000)
+        function getAllContainers() {
+            var filters = //get all filters from UI
+            $.post("@routes.WSController.getContainers",
+                {filters},
+                data => {
+                    //console.log("Containers:\n" + data)
+                    showContainers(data)
+                });
+        }
 
         var changed = false;
 
@@ -34,6 +45,7 @@
 
         function execute(task_id, cmd, out_id){
             var cmd = document.getElementById(cmd).value
+            document.getElementById("ERROR_ICON_" + task_id).style.display = "none"
             //console.log(cmd)
             $.post("@routes.WSController.execute",
             {task_id,cmd},
@@ -49,9 +61,8 @@
                     setTimeout(function(){checkCompletedAndFetchLog(task_id, out_id, started)},10)
                 }
             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
-             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
+               //alert(textStatus + ': ' + jqXHR.responseText);
+               console.log(jqXHR, textStatus, errorThrown)
              });
         }
 
@@ -78,28 +89,72 @@
                 changed = true
                 //console.log(data)
             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
-             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
+               //alert(textStatus + ': ' + jqXHR.responseText);
+               console.log(jqXHR, textStatus, errorThrown)
              });
         }
 
         function fetchTaskLog(task_id, out_id){
+            var hasErrors = false;
+            hasErrors = (document.getElementById("ERROR_ICON_" + task_id).style.display == "block")
+
             $.post("@routes.WSController.getLogs",
             {task_id},
             data => {
                 if(data.trim() !== ""){
+                    var dataArr = data.split("\n")
+                    var errorElements = document.getElementById("ERR_" + task_id).value.split("\n")
+                    var ignoreElements = document.getElementById("ERR_IGNORE_" + task_id).value.split("\n")
+
+                    //console.log("ERR_IGNORE_" + task_id + ", " + document.getElementById("ERROR_ICON_" + task_id).style.display + "," + errorElements[0] + "," + ignoreElements[0])
+                    //console.log(document.getElementById("ERR_" + task_id).value)
+                    if(document.getElementById("ERROR_ICON_" + task_id).style.display == "none"){
+                        for(k in dataArr){
+                            if(dataArr[k].trim() != ""){
+                                for(i in errorElements){
+                                    if(errorElements[i].trim() != "" && dataArr[k].trim().includes(errorElements[i].trim())){
+                                        for(j in ignoreElements){
+                                            if(ignoreElements[j].trim() != "" && dataArr[k].trim().includes(ignoreElements[j].trim())){
+                                                document.getElementById("ERROR_ICON_" + task_id).style.display = "none"
+                                                console.log("No Error")
+                                                break;
+                                            }
+                                            hasErrors = true;
+                                            document.getElementById("ERROR_ICON_" + task_id).style.display = "block"
+                                            console.log("Error")
+                                        }
+                                        if(hasErrors){
+                                            break;
+                                        }
+                                    }
+                                    if(hasErrors){
+                                        break;
+                                    }
+                                }
+                            }
+                            if(hasErrors){
+                                break;
+                            }
+                        }
+                    }else{
+                        hasErrors = true;
+                    }
                     var outElem = document.getElementById(out_id);
                     outElem.value = outElem.value + "\n" + data
+
+                    if(outElem.value.length > 10000){
+                        outElem.value = outElem.value.substring(1000,outElem.value.length)
+                    }
+
                     outElem.scrollTop = outElem.scrollHeight;
                     resize(out_id)
                     changed = true
                 }
             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
-             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
+               //alert(textStatus + ': ' + jqXHR.responseText);
+               console.log(jqXHR, textStatus, errorThrown)
              });
+             return hasErrors;
         }
 
         function checkCompletedAndFetchLog(task_id, logLoc, start) {
@@ -113,11 +168,11 @@
                 }
                 else if(data === "COMPLETED"){
                     //console.log("Finishing")
-                    fetchTaskLog(task_id, logLoc)
+                    var hasErrors = fetchTaskLog(task_id, logLoc)
                     markCompleted(task_id)
                 }else{
-                    fetchTaskLog(task_id, logLoc)
-                    toggleColor(task_id)
+                    var hasErrors = fetchTaskLog(task_id, logLoc)
+                    toggleColor(task_id, hasErrors)
                     //console.log("Fetching")
                     setTimeout(function(){checkCompletedAndFetchLog(task_id, logLoc, start)}, 1000)
                 }
@@ -128,16 +183,16 @@
                 console.log(elapsed)
 
             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
-             }).fail(function (jqXHR, textStatus, errorThrown) {
-               alert(textStatus + ': ' + jqXHR.responseText);
+               //alert(textStatus + ': ' + jqXHR.responseText);
+               console.log(jqXHR, textStatus, errorThrown)
              });
         }
 
-        function clearTaskLogs(out_id){
-            var outElem = document.getElementById(out_id);
+        function clearTaskLogs(tid){
+            var outElem = document.getElementById("OUT_" + tid);
             outElem.value = ""
             changed = true
+            document.getElementById("ERROR_ICON_" + tid).style.display = "none"
         }
 
         function minimize(tID){
@@ -225,9 +280,8 @@
                             x.add(option);
                         }
                 }).fail(function (jqXHR, textStatus, errorThrown) {
-                   alert(textStatus + ': ' + jqXHR.responseText);
-                }).fail(function (jqXHR, textStatus, errorThrown) {
-                   alert(textStatus + ': ' + jqXHR.responseText);
+                   //alert(textStatus + ': ' + jqXHR.responseText);
+                   console.log(jqXHR, textStatus, errorThrown)
                 });
             }
         }
@@ -251,8 +305,7 @@
                     }
                 }).fail(function (jqXHR, textStatus, errorThrown) {
                    alert(textStatus + ': ' + jqXHR.responseText);
-                }).fail(function (jqXHR, textStatus, errorThrown) {
-                   alert(textStatus + ': ' + jqXHR.responseText);
+                   console.log(jqXHR, textStatus, errorThrown)
                 });
             }
         }
@@ -267,13 +320,12 @@
                     {allContent},
                     data => {
                         if(data.trim() !== ""){
-                            //console.log(data)
+                            console.log(data)
                         }
                 }).fail(function (jqXHR, textStatus, errorThrown) {
-                   alert(textStatus + ': ' + jqXHR.responseText);
-                }).fail(function (jqXHR, textStatus, errorThrown) {
-                   alert(textStatus + ': ' + jqXHR.responseText);
-                });
+                   //alert(textStatus + ': ' + jqXHR.responseText);
+                   console.log(jqXHR, textStatus, errorThrown)
+                })
                 lastContent = content;
                 var infoElem = document.getElementById("showInfo")
                 infoElem.innerText = "Auto Saved"
@@ -297,10 +349,14 @@
             }
         }
 
-        function toggleColor(taskID){
+        function toggleColor(taskID, hasErrors){
             var e = document.getElementById("MOVABLE_" + taskID + "header")
             if(e.style.backgroundColor == "yellow"){
-                e.style.backgroundColor = "lightgreen"
+                if(hasErrors){
+                    e.style.backgroundColor = "#ffcccb"
+                }else{
+                    e.style.backgroundColor = "lightgreen"
+                }
             }else{
                 e.style.backgroundColor = "yellow"
             }
@@ -308,7 +364,12 @@
 
         function markCompleted(taskID){
             var e = document.getElementById("MOVABLE_" + taskID + "header")
-            e.style.backgroundColor = "lightgreen"
+            var hasErrors = (document.getElementById("ERROR_ICON_" + taskID).style.display == "block")
+            if(hasErrors){
+                e.style.backgroundColor = "#ffcccb"
+            }else{
+                e.style.backgroundColor = "lightgreen"
+            }
         }
 
 
@@ -345,6 +406,15 @@
         <button onclick="selectCP()">Load</button>
     </div>
     <lable id ="showInfo"></lable>
+
+
+    <lable>Containers</lable>
+    <div id="containers">
+    </div>
+    <div id="k8s">
+        <lable>K8s Cluster</lable>
+        <lable>Pods</lable>
+    </div>
 
 </body>
 </html>
