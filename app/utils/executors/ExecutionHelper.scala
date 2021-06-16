@@ -15,7 +15,9 @@ class ExecutionHelper(cmd:String) {
 
 
   def start(): ExecutionHelper ={
-    process = (cmd.split(" ").toSeq) run new ProcessIO(_.close(), fetchOutput, fetchError)
+    val cmd_ = Seq("bash","-c", cmd); //.split(" ").toSeq
+    println(cmd_)
+    process = (cmd_) run new ProcessIO(_.close(), fetchOutput, fetchError)
     this
   }
 
@@ -66,7 +68,7 @@ class ExecutionHelper(cmd:String) {
   def getAllLogs(): String = {
     val allLogs = new util.ArrayList[String]()
     logQ.drainTo(allLogs)
-    allLogs.toArray().mkString("\r\n","\r\n","\r\n")
+    allLogs.toArray().mkString("","\r\n","")
   }
 
   def stopExecution(): Unit ={

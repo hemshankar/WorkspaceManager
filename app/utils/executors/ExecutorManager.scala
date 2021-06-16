@@ -1,9 +1,7 @@
 package utils.executors
 
-class ExecutorManager {
+object ExecutorManager {
 
   //Map[TaskID,ExecutionHelper]
   val executors = scala.collection.concurrent.TrieMap[String, ExecutionHelper]()
-
-
 }

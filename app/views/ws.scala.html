@@ -1,47 +1,350 @@
-@(title: String, content: String)
+@(title: String, content: String, tasks:String, cps:List[(String,String)])
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <title>@title</title>
-    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-    <!--<link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/main.css")'>-->
     <link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/ws.css")'>
-    <!--<link rel="stylesheet" media="screen" href='@routes.Assets.versioned("stylesheets/prism.css")'>-->
     <link rel="shortcut icon" type="image/png" href='@routes.Assets.versioned("images/favicon.png")'>
-    <!--
-    <script src='@routes.Assets.versioned("javascripts/hello.js")' type="text/javascript"></script>
-    <script src='@routes.Assets.versioned("javascripts/prism.js")' type="text/javascript"></script>
-    -->
-    <!--<script src='@routes.Assets.versioned("codemirror-5.53.2/lib/codemirror.js")' type="text/javascript"></script>-->
-
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
 
 </head>
 
-<body>
+<body onload="loadTasks();saveWSTempEveryXSec(5);getAllRunningTasks()">
     <script>
+
+        var changed = false;
+
+        function loadTasks(){
+            var taskStr = atob("@tasks")
+            //console.log(taskStr)
+            var tasks = taskStr.split("<---====-->")
+            console.log(tasks)
+            var i;
+            for (i = 0; i < tasks.length; i++) {
+                var taskElems = tasks[i].split("<----->")
+                //console.log(taskElems)
+                if(taskElems.length > 6)
+                    addElementWithDetails(taskElems[0],taskElems[1],taskElems[2],taskElems[3],taskElems[4],taskElems[5],taskElems[6],taskElems[7], taskElems[8])
+            }
+
+        }
+
         function execute(task_id, cmd, out_id){
             var cmd = document.getElementById(cmd).value
-            console.log(cmd)
+            //console.log(cmd)
             $.post("@routes.WSController.execute",
             {task_id,cmd},
             data => {
                 var outElem = document.getElementById(out_id);
-                outElem.innerHTML = outElem.innerHTML + "\n" + data.recentLog
-                console.log(data)
+                outElem.value = outElem.value + "\n" + data
+                //console.log(data)
+                if(data === "STARTED"){
+                    var startedTime = Date.now();
+                    var started = new Date(startedTime);
+                    var startLoc = document.getElementById("STARTED_" + task_id)
+                    startLoc.innerText = started.toString()//formatDate(started)//started.toString("MMM dd YYYY")
+                    setTimeout(function(){checkCompletedAndFetchLog(task_id, out_id, started)},10)
+                }
             }).fail(function (jqXHR, textStatus, errorThrown) {
                alert(textStatus + ': ' + jqXHR.responseText);
              }).fail(function (jqXHR, textStatus, errorThrown) {
                alert(textStatus + ': ' + jqXHR.responseText);
              });
         }
+
+        function formatDate(date) {
+            var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+            if (month.length < 2)
+                month = '0' + month;
+            if (day.length < 2)
+                day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
+        function abort2(task_id){
+            $.post("@routes.WSController.abort",
+            {task_id},
+            data => {
+                var outElem = document.getElementById("OUT_" + task_id);
+                outElem.value = outElem.value + "\n" + data
+                changed = true
+                //console.log(data)
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+               alert(textStatus + ': ' + jqXHR.responseText);
+             }).fail(function (jqXHR, textStatus, errorThrown) {
+               alert(textStatus + ': ' + jqXHR.responseText);
+             });
+        }
+
+        function fetchTaskLog(task_id, out_id){
+            $.post("@routes.WSController.getLogs",
+            {task_id},
+            data => {
+                if(data.trim() !== ""){
+                    var outElem = document.getElementById(out_id);
+                    outElem.value = outElem.value + "\n" + data
+                    outElem.scrollTop = outElem.scrollHeight;
+                    resize(out_id)
+                    changed = true
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+               alert(textStatus + ': ' + jqXHR.responseText);
+             }).fail(function (jqXHR, textStatus, errorThrown) {
+               alert(textStatus + ': ' + jqXHR.responseText);
+             });
+        }
+
+        function checkCompletedAndFetchLog(task_id, logLoc, start) {
+
+            $.post("@routes.WSController.isCompleted",
+            {task_id},
+            data => {
+                //console.log(data)
+                if(data === "TASK_NOT_FOUND"){
+                    console.log("No Task with ID: " + task_id)
+                }
+                else if(data === "COMPLETED"){
+                    //console.log("Finishing")
+                    fetchTaskLog(task_id, logLoc)
+                    markCompleted(task_id)
+                }else{
+                    fetchTaskLog(task_id, logLoc)
+                    toggleColor(task_id)
+                    //console.log("Fetching")
+                    setTimeout(function(){checkCompletedAndFetchLog(task_id, logLoc, start)}, 1000)
+                }
+                var end = Date.now();
+                var elapsed = end - start;
+                var durationLoc = document.getElementById("DURATION_" + task_id)
+                durationLoc.innerText = msToTime(elapsed)
+                console.log(elapsed)
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+               alert(textStatus + ': ' + jqXHR.responseText);
+             }).fail(function (jqXHR, textStatus, errorThrown) {
+               alert(textStatus + ': ' + jqXHR.responseText);
+             });
+        }
+
+        function clearTaskLogs(out_id){
+            var outElem = document.getElementById(out_id);
+            outElem.value = ""
+            changed = true
+        }
+
+        function minimize(tID){
+            showHideElem("cmd_details_" + tID, "none")
+        }
+
+        function maximize(tID){
+            showHideElem("cmd_details_" + tID, "block")
+        }
+
+        function showHideElem(id, displayOption){
+            var elem = document.getElementById(id)
+            elem.style.display = displayOption
+        }
+
+        function deleteMe(tID){
+            var r = confirm("Confirm Delete. Cannot be un-done.");
+            if (r == true) {
+                abort2(tID)
+                var myobj = document.getElementById(tID);
+                myobj.remove();
+            }
+        }
+
+        function updateTaskTitle(elem,id){
+            document.getElementById(id).value = elem.value
+        }
+        function getAllTasks(skipLogs) {
+            var allElems = document.querySelectorAll('[id^="TASK_"]');//$("div[id^='TASK_ID']")//document.querySelectorAll('*[id^="TASK_ID"]');
+            //console.log("allElems:" + allElems.length)
+            var content = ""
+            for( elem of allElems){
+              if(elem.id !== "TASK_ID"){
+                    var taskID = elem.id
+                    var rect = elem.getBoundingClientRect();
+                    var e = document.getElementById("MOVABLE_" + taskID)
+                    var zIndex = e.style.zIndex
+
+
+                    var name = document.getElementById("NAME_" + elem.id).value.trim()
+                    var cmd = document.getElementById("CMD_" + elem.id).value.trim()
+                    var out = ""
+                    if(!skipLogs){
+                        out = document.getElementById("OUT_" + elem.id).value.trim()
+                    }
+                    var duration = document.getElementById("DURATION_" + taskID).innerText
+                    var started = document.getElementById("STARTED_" + taskID).innerText
+                    content = content + taskID + "<----->" + name + "<----->" + cmd + "<----->" + out + "<----->" + rect.top + "<----->" + rect.left  + "<----->" +  zIndex + "<----->" + duration + "<----->" + started+ "<---====-->"
+                    content = content.trim()
+                    elem.style.top = 100
+                    elem.style.left = 100
+              }
+            }
+            content = btoa(content)
+            //console.log(content)
+            return content
+        }
+
+
+        function getAllTasksExceptLogs() {
+           getAllTasks(true)
+        }
+
+        function createCheckpoint(){
+
+            var cpName = prompt("Please enter your name", "Harry Potter");
+
+            if (cpName != null) {
+                var saveLogs = confirm("Save Logs? Yes = Ok, No =  Cancel")
+                var content = ""
+                if(saveLogs){
+                    content = getAllTasks()
+                }else{
+                    content = getAllTasksExceptLogs()
+                }
+                $.post("@routes.WSController.createCP",
+                    {content, cpName},
+                    data => {
+                        if(data.trim() !== ""){
+                            //console.log(data)
+                            var x = document.getElementById("cps");
+                            var option = document.createElement("option");
+                            option.text = cpName;
+                            option.value = data
+                            x.add(option);
+                        }
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                   alert(textStatus + ': ' + jqXHR.responseText);
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                   alert(textStatus + ': ' + jqXHR.responseText);
+                });
+            }
+        }
+
+
+        function deleteCheckpoint(){
+
+            var r = confirm("Confirm Delete");
+            if (r) {
+                var x = document.getElementById("cps");
+                var fname =  x.value
+
+                $.post("@routes.WSController.deleteCP",
+                {fname},
+                data => {
+                    if(data.trim() !== ""){
+                        //console.log(data)
+                        alert(data)
+                        var x = document.getElementById("cps");
+                        x.remove(x.selectedIndex);
+                    }
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                   alert(textStatus + ': ' + jqXHR.responseText);
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                   alert(textStatus + ': ' + jqXHR.responseText);
+                });
+            }
+        }
+
+        var lastContent = ""
+        function saveWSTemp(){
+            var content = getAllTasksExceptLogs()
+            if(changed || content !== lastContent){
+                changed = false
+                var allContent = getAllTasks()
+                $.post("@routes.WSController.saveWSTemp",
+                    {allContent},
+                    data => {
+                        if(data.trim() !== ""){
+                            //console.log(data)
+                        }
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                   alert(textStatus + ': ' + jqXHR.responseText);
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                   alert(textStatus + ': ' + jqXHR.responseText);
+                });
+                lastContent = content;
+                var infoElem = document.getElementById("showInfo")
+                infoElem.innerText = "Auto Saved"
+                setTimeout(function(){ infoElem.innerText = ""; }, 2000)
+            }
+        }
+
+        function saveWSTempEveryXSec(s){
+            setInterval(function() {saveWSTemp();}, s * 1000)
+        }
+
+        function selectCP() {
+            var cpList = document.getElementById("cps")
+            if("NONE" !== cpList.value){
+                var r = confirm("Confirm to use selected checkpoint. All latest changes will be lost if new Checkpoint was not created.")
+                if( r ){
+                    window.location.href = "/wsWithCP/" + cpList.value;
+                }else{
+                    cpList.value = "NONE"
+                }
+            }
+        }
+
+        function toggleColor(taskID){
+            var e = document.getElementById("MOVABLE_" + taskID + "header")
+            if(e.style.backgroundColor == "yellow"){
+                e.style.backgroundColor = "lightgreen"
+            }else{
+                e.style.backgroundColor = "yellow"
+            }
+        }
+
+        function markCompleted(taskID){
+            var e = document.getElementById("MOVABLE_" + taskID + "header")
+            e.style.backgroundColor = "lightgreen"
+        }
+
+
+        function getAllRunningTasks(){
+            console.log("Checking for all the running process")
+            $.get("@routes.WSController.getAllRunningTasks", function(data, status){
+                console.log("Data: " + data + "\nStatus: " + status);
+
+                if(data.trim() !== ""){
+                    var taskIDs = data.split(",")
+                    for(index in taskIDs){
+                    var taskId = taskIDs[index]
+                        checkCompletedAndFetchLog(taskId, "OUT_" + taskId, Date.now())
+                    }
+                }
+              });
+        }
+
     </script>
     <script src='@routes.Assets.versioned("javascripts/ws.js")' type="text/javascript"></script>
     <div id="main_panel"></div>
     <div style="display: none" id="taskDetails">@task()</div>
     <button onclick="addElem3()">Add Element</button>
+    <button onclick="createCheckpoint()">Create Checkpoint</button>
+    <div style="border: 1px solid black">
+        <label for="cps">Check Points:</label>
+        <select id="cps" name="cps">
+            <option value="NONE">Select</option>
+            @for(cp <- cps) {
+                <option value="@cp._1">@cp._2</option>
+            }
+        </select>
+        <button onclick="deleteCheckpoint()">Delete</button>
+        <button onclick="selectCP()">Load</button>
+    </div>
+    <lable id ="showInfo"></lable>
+
 </body>
 </html>

@@ -72,7 +72,7 @@ function checkIfexecCompleted2(timestamp){
     $.post("@routes.EnvMgrCtrl.isExecutionCompleted",
         {folderName},
         data => {
-            console.log("checkIfexecCompleted: " + data)
+            //console.log("checkIfexecCompleted: " + data)
             if("true" === data){
                 fetchAllLog2(timestamp);
             }else{
@@ -99,7 +99,7 @@ function exeAsync2(timestamp){
     $.post("@routes.EnvMgrCtrl.execcmds",
     {folderName, cmds},
     data => {
-        console.log(data)
+        //console.log(data)
         if(data === 'Started'){
             setTimeout(() => {
                 startFetchingLogs2(timestamp);
@@ -113,7 +113,7 @@ function abort(timestamp) {
   $.post("@routes.EnvMgrCtrl.abort",
     {folderName},
     data => {
-        console.log(data)
+        //console.log(data)
         if(data === 'Aborted'){
            document.getElementById("logs_" + timestamp).style.background = "white"
         }
@@ -155,6 +155,7 @@ function clone(timestamp){
 
 var globalTop = 100;
 var globalLeft = 100;
+var zIndex = 1;
 
 function clearLogs(){
 
@@ -171,7 +172,7 @@ function addElem2(n, header, location, cmds, logMustContain, logMustNotContain){
     var left = Math.floor(Math.random() * 1000) + 100
     var top = Math.floor(Math.random() * 200) + 100
 
-    elem.style.cssText = 'position:absolute;z-index:9;background-color: lightgray; top:' + globalTop + 'px; left: ' + globalLeft + 'px;';
+    elem.style.cssText = 'position:absolute;z-index:9;background-color: #fff2e6; top:' + globalTop + 'px; left: ' + globalLeft + 'px;';
     globalTop = globalTop + 100;
 
     if(globalTop > 800){
@@ -185,7 +186,7 @@ function addElem2(n, header, location, cmds, logMustContain, logMustNotContain){
     document.getElementById("main_panel").appendChild(elem);
 
     elem.innerHTML = elem.innerHTML + "<div  class='movableDivheader' id='myDiv_" + n + "header' value = " + header + "></div>"
-                                    + "<div style='width: 100%; background-color: lightgray' > <input style='width: 100%;' id='header_" + n + "' name='header_" + n + "' value = " + header + "></input>"
+                                    + "<div style='width: 100%; background-color: #fff2e6' > <input style='width: 100%;' id='header_" + n + "' name='header_" + n + "' value = " + header + "></input>"
                                     + "<label id='showHide_" + n + "' class='button' onclick='showHide(" + n + ")'>Expand</label>"
                                     + "<label id='execute_" + n + "' onclick='exeAsync2(" + n + ")' class='button'>Execute</label>"
                                     + "<label id='abort_" + n + "' onclick='abort(" + n + ")' class='button'>Abort</label>"
@@ -208,19 +209,45 @@ function addElem2(n, header, location, cmds, logMustContain, logMustNotContain){
       }, 200);*/
 }
 
+function addElementWithDetails(id, name, cmds, logs, top, left, zIndex_, duration, started){
+
+    var elem = document.createElement('div');
+    var zIn = parseInt(zIndex_)
+    if(zIn > zIndex){
+        zIndex = zIn
+    }
+
+    elem.style.cssText = 'position:absolute;z-index:' + zIn + '; background-color: #fff2e6; top:' + top + 'px; left:' + left + 'px;';
+
+    elem.id = "MOVABLE_" + id
+    elem.class = "movableDiv"
+    document.getElementById("main_panel").appendChild(elem);
+
+    var taskUICode = document.getElementById("taskDetails").innerHTML + ""
+    taskUICode = taskUICode.replace(/TASK_ID/g, id)
+    taskUICode = taskUICode.replace(/COMMAND_NAME/g, name.trim())
+    taskUICode = taskUICode.replace(/YOUR_COMMANDS/g, cmds.trim())
+    taskUICode = taskUICode.replace(/GENERATED_LOGS/g, logs.trim())
+    elem.innerHTML = elem.innerHTML + taskUICode
+    document.getElementById("DURATION_" + id).innerText = duration
+    document.getElementById("STARTED_" + id).innerText = started
+    dragElement(elem);
+    minimize(id)
+}
+
 
 function addElem3(){
-
 
     var randomNum = Math.floor(Math.random() * 1000000000);
     var date_ = new Date();
     var time_ = date_.getTime();
-
+    var tID = "TASK_" + time_ + "_" + randomNum
     var elem = document.createElement('div');
     var left = Math.floor(Math.random() * 1000) + 100
     var top = Math.floor(Math.random() * 200) + 100
 
-    elem.style.cssText = 'position:absolute;z-index:9;background-color: lightgray; top:' + globalTop + 'px; left: ' + globalLeft + 'px;';
+    elem.style.cssText = 'position:absolute;z-index:' + zIndex + '; background-color: #fff2e6; top:' + globalTop + 'px; left: ' + globalLeft + 'px;';
+    zIndex = parseInt(zIndex) + 1
     globalTop = globalTop + 100;
 
     if(globalTop > 800){
@@ -228,28 +255,20 @@ function addElem3(){
       globalLeft = globalLeft + 500;
     }
 
-
-    elem.id = "MOVABLE_TASK_" + time_ + "_" + randomNum
+    elem.id = "MOVABLE_" + tID
     elem.class = "movableDiv"
     document.getElementById("main_panel").appendChild(elem);
 
     var taskUICode = document.getElementById("taskDetails").innerHTML + ""
-    taskUICode = taskUICode.replace(/TASK_ID/g, "TASK_" + time_ + "_" + randomNum)
-    taskUICode = taskUICode.replace(/TASK_NAME/g, "NAME" + time_ + "_" + randomNum)
-    taskUICode = taskUICode.replace(/TASK_CMD/g, "CMD_" + time_ + "_" + randomNum)
-    taskUICode = taskUICode.replace(/TASK_OUT/g, "OUT_" + time_ + "_" + randomNum)
+    taskUICode = taskUICode.replace(/TASK_ID/g, tID)
 
     elem.innerHTML = elem.innerHTML + taskUICode
-    dragElement(elem);//document.getElementById("NAME" + time_ + "_" + randomNum));
-     /*setTimeout(() => {
-          addMyEventListner(n)
-      }, 200);*/
+    dragElement(elem);
 }
 
 function addMyEventListner(timestamp){
   document.getElementById ("execute_" + timestamp).addEventListener ("onclick", "exeAsync2(" + timestamp + ")", false);
 }
-
 
 function dragElement(elmnt) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -262,6 +281,8 @@ function dragElement(elmnt) {
   }
 
   function dragMouseDown(e) {
+    zIndex = parseInt(zIndex) + 1
+    elmnt.style.zIndex = zIndex;
     e = e || window.event;
     e.preventDefault();
     // get the mouse cursor position at startup:
@@ -297,7 +318,7 @@ function dragElement(elmnt) {
 //--------------------------------------------------------------------------------------
 /*
 function loadTasks() {
-  console.log("loading tasks...")
+  //console.log("loading tasks...")
   var keySeparators = "----"
   var valueSeparators = "____"
   var timestampSeparators = "_-_-_-_"
@@ -357,7 +378,7 @@ function checkIfexecCompleted(folderName,fetchAllLog,fetchLog){
     $.post("@routes.EnvMgrCtrl.isExecutionCompleted",
         {folderName},
         data => {
-            console.log("checkIfexecCompleted: " + data)
+            //console.log("checkIfexecCompleted: " + data)
             if("true" === data){
                 fetchAllLog(folderName);
             }else{
@@ -368,6 +389,7 @@ function checkIfexecCompleted(folderName,fetchAllLog,fetchLog){
             }
     });
 }
+
 
 function startFetchingLogs(folderName){
     setTimeout(() => {
@@ -386,7 +408,7 @@ function exeAsync(folderName){
     $.post("@routes.EnvMgrCtrl.execcmds",
     {folderName, cmds},
     data => {
-        console.log(data)
+        //console.log(data)
         if(data === 'Started'){
             setTimeout(() => {
                 startFetchingLogs(folderName);
@@ -406,3 +428,32 @@ function saveWorkspace(){
   const saveWSButton = document.getElementById('saveWSButton')
   setTimeout(() => {saveWSButton.click()}, 2000)
 }
+
+
+//============================================AUTO Resize Text area===========================================
+
+function resize (outID) {
+    var text = document.getElementById(outID);
+    text.style.height = 'auto';
+    text.style.height = text.scrollHeight+'px';
+}
+
+///============================================Milliseconds to time=============================================
+ function msToTime(s) {
+
+   // Pad to 2 or 3 digits, default is 2
+   function pad(n, z) {
+     z = z || 2;
+     return ('00' + n).slice(-z);
+   }
+
+   var ms = s % 1000;
+   s = (s - ms) / 1000;
+   var secs = s % 60;
+   s = (s - secs) / 60;
+   var mins = s % 60;
+   var hrs = (s - mins) / 60;
+
+   //return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+   return pad(hrs) + ':' + pad(mins) + ':' + pad(secs);
+ }

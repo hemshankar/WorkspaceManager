@@ -1,26 +1,60 @@
 <div id="TASK_ID">
-    <table style="border: 1px solid black; background: gray; color: white;">
+    <div style="white-space: nowrap; padding: 5px;"  class='movableDivheader' id='MOVABLE_TASK_IDheader' value = " + header + ">
+
+        <lable id="DURATION_TASK_ID" style="font-size: 12px; font-weight: normal;cursor: move;"></lable>
+        <input style="font-size: 16px; border: none; background: transparent; cursor: move;  white-space: nowrap; padding-left: 5px;" id="taskNamelbl_TASK_ID" value="COMMAND_NAME"></input>
+        <img title="Delete" onclick="deleteMe('TASK_ID')" style="float: right; padding-right: 2px; padding-left: 10px; width: 18px; height: 18px; cursor: auto;" src='@routes.Assets.versioned("images/delete.png")'/>
+        <img title="Minimize"  onclick="minimize('TASK_ID')" style="float: right; padding-right: 5px; width: 18px; height: 18px; cursor: auto;" src='@routes.Assets.versioned("images/min.png")'/>
+        <img title="Maximize" onclick="maximize('TASK_ID'); resize('OUT_TASK_ID')" style="float: right; padding-right: 10px; width: 18px; height: 18px; cursor: auto;" src='@routes.Assets.versioned("images/max.png")'/>
+        <img title="Run Command" style="float: right; padding-right: 5px;  cursor: auto; width: 18px; height: 18px;" onclick="execute('TASK_ID','CMD_TASK_ID', 'OUT_TASK_ID' )" src='@routes.Assets.versioned("images/favicon.png")'/>
+        <img title="Clear Logs" style="float: right; width: 18px; height: 18px;padding-right: 5px;  cursor: auto;" onclick="clearTaskLogs('OUT_TASK_ID')" src='@routes.Assets.versioned("images/clear.png")'/>
+        <img title="Abort Job" style="float: right; width: 18px; height: 18px;padding-right: 5px; cursor: auto; " onclick="abort2('TASK_ID')" src='@routes.Assets.versioned("images/abort2.png")'/>
+    </div>
+    </div>
+    <table id="cmd_details_TASK_ID" style="color: black;padding: 2px;">
         <tr>
             <th>
-                <div id="TASK_NAME">
-                    <input type="text" style="width: 85%; float: left; background: black; color: white; border: none;" value="Name">
-                    <div style="float: right;width: 2%"  class='movableDivheader' id='MOVABLE_TASK_IDheader' value = " + header + "></div>
+                <div >
+                    <lable style="float: left; padding-top: 10px;font-family: 'Lucida Console', 'Courier New', monospace;">Name: </lable>
+                    <input id="NAME_TASK_ID" onchange="updateTaskTitle(this, 'taskNamelbl_TASK_ID')"
+                           onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"
+                           type="text"
+                           style="float: left; font-size: 12px; padding: 2px; padding-top: 10px;
+                                border: none; width: 300px;
+                                border-bottom: 1px black solid;
+                                background: transparent; color: black;"
+                            value="COMMAND_NAME">
                 </div>
             </th>
         </tr>
         <tr>
             <td>
-                <textarea id="TASK_CMD" type="text" value="cmd" style="width: 90%; height: 20px; color: white; border: none; border-bottom: 1px solid white; background: gray">ls -ltr</textarea>
-                <img style="float: right;" onclick="execute('TASK_ID','TASK_CMD', 'TASK_OUT' )" src='@routes.Assets.versioned("images/favicon.png")'/>
+                <div style="padding: 5px;padding-top: 20px;">
+                    <lable style="font-family: 'Lucida Console', 'Courier New', monospace;">Command: </lable>
+                    <div>
+                        <textarea id="CMD_TASK_ID" type="text" value="cmd" style="border: 1px solid black;
+                        font-family: 'Lucida Console', 'Courier New', monospace; width: 100%;
+                         color: black; background: #ffcc99">YOUR_COMMANDS</textarea>
+                    </div>
+                </div>
             </td>
 
         </tr>
         <tr>
             <td>
-                <!--<textarea type="text" value="cmd" style="color: white; border: none; border-bottom: 1px solid white; background: black">logs</textarea>-->
-                <div id="TASK_OUT" style="margin: 2px;max-width: 800px; resize: both;
-                    max-height: 400px; overflow: auto; white-space: pre; background: black;
-                    color: lightgreen; font-size: 10px; font-family: couriernew"></div>
+                <div style="padding: 5px;padding-top: 20px;">
+                    <label style="font-size: 12px; font-weight: bold;cursor: move;">Last Started: </label>
+                    <lable id="STARTED_TASK_ID" style="font-size: 12px; font-weight: normal;cursor: move;"></lable>
+                    <br/>
+                    <lable>Output: </lable><br/>
+                    <textarea id="OUT_TASK_ID" spellcheck="false" disabled
+                            style="resize: both;
+                            max-height: 400px; width: 350px;
+                            border: none; overflow: auto;
+                            white-space: pre; background: black;
+                            color: lightgreen; font-size: 10px;
+                            font-family: 'Lucida Console', 'Courier New', monospace;">GENERATED_LOGS</textarea>
+                </div>
             </td>
         </tr>
     </table>
