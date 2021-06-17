@@ -497,7 +497,7 @@ function showContainerLogs(containerName){
     var left = Math.floor(Math.random() * 1000) + 100
     var top = Math.floor(Math.random() * 200) + 100
     addElementWithDetails(tID, containerName, "docker logs --follow --tail 10 " + containerName, "", top, left, "0", 0, 0)
-    document.getElementById("MAX_" + tID).click();
+    //document.getElementById("MAX_" + tID).click();
     var runButton = document.getElementById("RUN_" + tID)
     runButton.click();
 }

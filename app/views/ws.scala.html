@@ -141,7 +141,7 @@
                     }
                     var outElem = document.getElementById(out_id);
                     outElem.value = outElem.value + "\n" + data
-
+                    toggleColor(task_id, hasErrors)
                     if(outElem.value.length > 10000){
                         outElem.value = outElem.value.substring(1000,outElem.value.length)
                     }
@@ -172,7 +172,7 @@
                     markCompleted(task_id)
                 }else{
                     var hasErrors = fetchTaskLog(task_id, logLoc)
-                    toggleColor(task_id, hasErrors)
+                    //toggleColor(task_id, hasErrors)
                     //console.log("Fetching")
                     setTimeout(function(){checkCompletedAndFetchLog(task_id, logLoc, start)}, 1000)
                 }
@@ -355,7 +355,7 @@
                 if(hasErrors){
                     e.style.backgroundColor = "#ffcccb"
                 }else{
-                    e.style.backgroundColor = "lightgreen"
+                    e.style.backgroundColor = "lightgray"
                 }
             }else{
                 e.style.backgroundColor = "yellow"
